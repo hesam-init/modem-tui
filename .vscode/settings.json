@@ -1,0 +1,32 @@
+{
+  /* ---------------------------- Default Formatter --------------------------- */
+  "editor.formatOnSave": true,
+  "typescript.tsc.autoDetect": "off",
+  "editor.defaultFormatter": "biomejs.biome",
+  "editor.codeActionsOnSave": {
+    "source.organizeImports.biome": "explicit",
+    "source.fixAll": "explicit"
+  },
+  "typescript.preferences.importModuleSpecifier": "shortest",
+  "[javascriptreact]": {
+    "editor.defaultFormatter": "biomejs.biome"
+  },
+  "[javascript]": {
+    "editor.defaultFormatter": "biomejs.biome"
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "biomejs.biome"
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "biomejs.biome"
+  },
+  "[json]": {
+    "editor.defaultFormatter": "vscode.json-language-features",
+    "editor.quickSuggestions": {
+      "strings": true
+    },
+    "editor.suggest.insertMode": "replace"
+  },
+  /* ----------------------------- Other Settings ----------------------------- */
+  "editor.snippetSuggestions": "inline",
+}
