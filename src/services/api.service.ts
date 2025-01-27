@@ -30,7 +30,9 @@ export type ServiceConfig = {
 };
 
 export class HttpService {
-	private http: AxiosInstance;
+	public http: AxiosInstance;
+	public sessionCookie = "";
+
 	private baseUrl = process.env.MODEM_IP;
 	private debugMode = false;
 	private xmlMode = false;
@@ -69,8 +71,14 @@ export class HttpService {
 	// 	return token;
 	// };
 
+	public setSessionCookie = (cookie: string) => {
+		this.sessionCookie = cookie;
+	};
+
 	private handleRequest = (config: InternalAxiosRequestConfig) => {
-		// config.headers.Authorization = this.getToken();
+		if (this.sessionCookie) {
+			config.headers.Cookie = this.sessionCookie;
+		}
 
 		return config;
 	};
