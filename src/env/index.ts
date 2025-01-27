@@ -10,7 +10,10 @@ export const zodEnv = z.object({
 		.string({
 			required_error: "MODEM_IP is required",
 		})
-		.min(1, "MODEM_IP is required and cannot be empty"),
+		.min(1, "MODEM_IP is required and cannot be empty")
+		.url({
+			message: "MODEM_IP must be a valid URL",
+		}),
 	MODEM_USERNAME: z.string({
 		required_error: "MODEM_USERNAME is required",
 	}),

@@ -5,6 +5,7 @@ import Axios, {
 	type AxiosResponse,
 	type InternalAxiosRequestConfig,
 } from "axios";
+import { XMLParser } from "fast-xml-parser";
 import type { ApiResponse } from "./api.types";
 
 export type CustomAxiosRequestConfig = AxiosRequestConfig & {
@@ -23,11 +24,26 @@ const defaultConfig: Partial<CustomAxiosRequestConfig> = {
 
 const requestTimeout = 15000;
 
+export type ServiceConfig = {
+	debug?: boolean;
+	xml?: boolean;
+};
+
 export class HttpService {
 	private http: AxiosInstance;
 	private baseUrl = process.env.MODEM_IP;
+	private debugMode = false;
+	private xmlMode = false;
 
-	constructor() {
+	constructor(config?: ServiceConfig) {
+		if (config?.debug) {
+			this.debugMode = true;
+		}
+
+		if (config?.xml) {
+			this.xmlMode = true;
+		}
+
 		this.http = Axios.create({
 			baseURL: `${this.baseUrl}`,
 			timeout: requestTimeout,
@@ -91,8 +107,21 @@ export class HttpService {
 		config?: CustomAxiosRequestConfig
 	): Promise<ApiResponse<T>> {
 		const finalConfig = { ...defaultConfig, ...config };
-
 		const response = await this.http.get(url, finalConfig);
+
+		if (this.debugMode) {
+			console.log(response);
+		}
+
+		if (this.xmlMode) {
+			const parser = new XMLParser();
+			const data = parser.parse(response.data);
+
+			return {
+				data: data.response || data,
+				status: response.status,
+			};
+		}
 
 		return {
 			data: response.data,
