@@ -4,6 +4,10 @@ export type NextW06ApiResponse = {
 	TempToken: {
 		token: string;
 	};
+	BaseTokens: {
+		TokInfo: string;
+		SesInfo: string;
+	};
 	Status: {
 		ConnectionStatus: string;
 		WifiConnectionStatus: string;

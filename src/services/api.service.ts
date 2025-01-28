@@ -5,7 +5,7 @@ import Axios, {
 	type AxiosResponse,
 	type InternalAxiosRequestConfig,
 } from "axios";
-import { XMLParser } from "fast-xml-parser";
+import { XMLBuilder, XMLParser } from "fast-xml-parser";
 import type { ApiResponse } from "./api.types";
 
 export type CustomAxiosRequestConfig = AxiosRequestConfig & {
@@ -32,10 +32,11 @@ export type ServiceConfig = {
 export class HttpService {
 	public http: AxiosInstance;
 	public sessionCookie = "";
+	public verificationToken = "";
+	public debugMode = false;
+	public xmlMode = false;
 
 	private baseUrl = process.env.MODEM_IP;
-	private debugMode = false;
-	private xmlMode = false;
 
 	constructor(config?: ServiceConfig) {
 		if (config?.debug) {
@@ -65,19 +66,21 @@ export class HttpService {
 		);
 	}
 
-	// private getToken = () => {
-	// 	const token = `Basic ${this.secretToken}`;
-
-	// 	return token;
-	// };
-
 	public setSessionCookie = (cookie: string) => {
 		this.sessionCookie = cookie;
+	};
+
+	public setVerificationToken = (token: string) => {
+		this.verificationToken = token;
 	};
 
 	private handleRequest = (config: InternalAxiosRequestConfig) => {
 		if (this.sessionCookie) {
 			config.headers.Cookie = this.sessionCookie;
+		}
+
+		if (this.verificationToken) {
+			config.headers.__RequestVerificationToken = this.verificationToken;
 		}
 
 		return config;
@@ -167,5 +170,10 @@ export class HttpService {
 		);
 
 		return response.data;
+	}
+
+	public xmlBuilder(data: any) {
+		const builder = new XMLBuilder({});
+		return builder.build(data);
 	}
 }

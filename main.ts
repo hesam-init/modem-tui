@@ -1,10 +1,12 @@
 import { envValidator } from "@/env";
-import { NextW06ServiceTest } from "@/services/next-w06/http.services";
+import { HuaweiHttpService } from "@/services/huawei/http.services";
 
 async function main() {
 	try {
 		const env = await envValidator();
-		await NextW06ServiceTest();
+		const huawei = new HuaweiHttpService();
+
+		huawei.start();
 	} catch (error) {
 		process.exit(1);
 	}
