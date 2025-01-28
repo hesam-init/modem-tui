@@ -75,6 +75,36 @@ export type HilinkApiResponse = {
 		spreadname_en: string;
 		spreadname_zh: string;
 	};
+	Information: {
+		DeviceName: string;
+		SerialNumber: string;
+		Imei: number;
+		Imsi: number;
+		Iccid: string;
+		Msisdn: string;
+		HardwareVersion: string;
+		SoftwareVersion: string;
+		WebUIVersion: string;
+		MacAddress1: string;
+		MacAddress2: string;
+		WanIPAddress: string;
+		wan_dns_address: string;
+		WanIPv6Address: string;
+		wan_ipv6_dns_address: string;
+		ProductFamily: string;
+		Classify: string;
+		supportmode: string;
+		workmode: string;
+		submask: string;
+		BTMacAddress: string;
+		Mccmnc: number;
+		uptime: number;
+		ImeiSvn: number;
+		WifiMacAddrWl0: string;
+		WifiMacAddrWl1: string;
+		spreadname_en: string;
+		spreadname_zh: string;
+	};
 	UsbTethering: {
 		tetheringswitch: number;
 	};

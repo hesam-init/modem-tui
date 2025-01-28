@@ -14,6 +14,7 @@ export type CustomAxiosRequestConfig = AxiosRequestConfig & {
 	showErrorToast?: boolean;
 	errorMessage?: string;
 	fullResponse?: boolean;
+	xml?: boolean;
 };
 
 const defaultConfig: Partial<CustomAxiosRequestConfig> = {
@@ -47,9 +48,6 @@ export class HttpService {
 		this.http = Axios.create({
 			baseURL: `${this.baseUrl}`,
 			timeout: requestTimeout,
-			headers: {
-				"Content-Type": "application/json",
-			},
 		});
 
 		this.http.interceptors.request.use(
@@ -122,19 +120,12 @@ export class HttpService {
 			console.log(response);
 		}
 
-		if (this.xmlMode) {
-			const parser = new XMLParser();
-			const data = parser.parse(response.data);
-
-			return {
-				data: data.response || data,
-				status: response.status,
-			};
-		}
-
 		return {
-			data: response.data,
+			data: this.xmlMode
+				? this.xmlParser(response.data).response
+				: response.data,
 			status: response.status,
+			fullResponse: config?.fullResponse ? response : undefined,
 		};
 	}
 
@@ -180,5 +171,12 @@ export class HttpService {
 		});
 
 		return builder.build(data);
+	}
+
+	// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+	public xmlParser(data: any) {
+		const parser = new XMLParser();
+
+		return parser.parse(data);
 	}
 }

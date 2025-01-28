@@ -24,7 +24,7 @@ export class HilinkHttpService extends HttpService {
 		this.setSessionCookie(authToken || "");
 
 		const getInformation = await this.getInformation();
-		console.log(getInformation.data);
+		console.log(getInformation.data?.DeviceName);
 	}
 
 	async postLogin() {
@@ -78,7 +78,7 @@ export class HilinkHttpService extends HttpService {
 	}
 
 	async getInformation() {
-		return this.get<HilinkApiResponse["BasicInformation"]>(
+		return this.get<HilinkApiResponse["Information"]>(
 			HilinkApiRoutes.Information
 		);
 	}
