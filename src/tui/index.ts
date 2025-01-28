@@ -1,4 +1,5 @@
 import { HilinkHttpService } from "@/services/hilink/http.services";
+import { formatBytes } from "@/utils/format-bytes";
 import blessed from "blessed";
 import contrib, { type Widgets } from "blessed-contrib";
 
@@ -42,9 +43,13 @@ export class Dashboard {
 		await this.hilinkService.start();
 		await this.hilinkService.getStateLogin();
 
-		setInterval(() => {
-			this.screen.render();
-		}, this.refreshRate);
+		// setInterval(() => {
+		// 	this.screen.render();
+		// }, this.refreshRate);
+	}
+
+	public async refresh() {
+		this.screen.render();
 	}
 
 	private initializeWidgets(): void {
@@ -53,7 +58,7 @@ export class Dashboard {
 			maxY: 10000000,
 			label: "Network Usage",
 			showLegend: true,
-			legend: { width: 10 },
+			legend: { width: 26 },
 		} as Widgets.LineOptions);
 
 		this.donut = this.grid.set(8, 8, 4, 2, contrib.donut, {
@@ -153,10 +158,10 @@ export class Dashboard {
 			this.sparkline.emit("attach");
 			this.bar.emit("attach");
 			this.table.emit("attach");
-			this.lcdLineOne.emit("attach");
+			// this.lcdLineOne.emit("attach");
 			this.errorsLine.emit("attach");
 			this.networkUsage.emit("attach");
-			this.informationBox.emit("attach");
+			// this.informationBox.emit("attach");
 			this.log.emit("attach");
 		});
 	}
@@ -201,25 +206,21 @@ export class Dashboard {
 			const networkStats = await this.hilinkService.getTrafficStatistics();
 
 			downloadRateData.y?.shift();
+			downloadRateData.title = `Download Rate ${formatBytes(networkStats.data?.CurrentDownloadRate || 0)}`;
 			downloadRateData.y?.push(networkStats.data?.CurrentDownloadRate || 0);
 
 			uploadRateData.y?.shift();
+			uploadRateData.title = `Upload Rate ${formatBytes(networkStats.data?.CurrentUploadRate || 0)}`;
 			uploadRateData.y?.push(networkStats.data?.CurrentUploadRate || 0);
-		};
-
-		const updateLineChartData = (
-			// biome-ignore lint/suspicious/noExplicitAny: <explanation>
-			data: any[],
-			lineChart: contrib.Widgets.LineElement
-		) => {
-			lineChart.setData(data);
 		};
 
 		setInterval(() => {
 			updateNetworkUsageData();
 
-			this.networkUsage.setData([downloadRateData, uploadRateData]);
-		}, 100);
+			this.networkUsage.setData([uploadRateData, downloadRateData]);
+
+			this.refresh();
+		}, 50);
 	}
 
 	private updateGauges(): void {
