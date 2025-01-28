@@ -1,10 +1,10 @@
 import { envValidator } from "@/env";
-import { HuaweiHttpService } from "@/services/huawei/http.services";
+import { HilinkHttpService } from "@/services/hilink/http.services";
 
 async function main() {
 	try {
 		const env = await envValidator();
-		const huawei = new HuaweiHttpService();
+		const huawei = new HilinkHttpService();
 
 		huawei.start();
 	} catch (error) {

@@ -1,6 +1,20 @@
 type SoftwareVersion = `${number}.${number}.${number}(${string})`;
 
-export type NextW06ApiResponse = {
+export type HilinkApiResponse = {
+	StateLogin: {
+		userlevel: string;
+		firstlogin: string;
+		remainwaittime: string;
+		rsapadingtype: string;
+		State: string;
+		wifipwdsamewithwebpwd: string;
+		extern_password_type: string;
+		accounts_number: string;
+		username: string;
+		password_type: string;
+		history_login_flag: string;
+		lockstatus: string;
+	};
 	TempToken: {
 		token: string;
 	};

@@ -5,7 +5,7 @@ import Axios, {
 	type AxiosResponse,
 	type InternalAxiosRequestConfig,
 } from "axios";
-import { XMLBuilder, XMLParser } from "fast-xml-parser";
+import { XMLBuilder, XMLParser, type XmlBuilderOptions } from "fast-xml-parser";
 import type { ApiResponse } from "./api.types";
 
 export type CustomAxiosRequestConfig = AxiosRequestConfig & {
@@ -13,6 +13,7 @@ export type CustomAxiosRequestConfig = AxiosRequestConfig & {
 	successMessage?: string;
 	showErrorToast?: boolean;
 	errorMessage?: string;
+	fullResponse?: boolean;
 };
 
 const defaultConfig: Partial<CustomAxiosRequestConfig> = {
@@ -31,21 +32,17 @@ export type ServiceConfig = {
 
 export class HttpService {
 	public http: AxiosInstance;
-	public sessionCookie = "";
-	public verificationToken = "";
+	private baseUrl = process.env.MODEM_IP;
+
 	public debugMode = false;
 	public xmlMode = false;
 
-	private baseUrl = process.env.MODEM_IP;
+	public sessionCookie = "";
+	public verificationToken = "";
 
 	constructor(config?: ServiceConfig) {
-		if (config?.debug) {
-			this.debugMode = true;
-		}
-
-		if (config?.xml) {
-			this.xmlMode = true;
-		}
+		this.debugMode = config?.debug || false;
+		this.xmlMode = config?.xml || false;
 
 		this.http = Axios.create({
 			baseURL: `${this.baseUrl}`,
@@ -75,12 +72,13 @@ export class HttpService {
 	};
 
 	private handleRequest = (config: InternalAxiosRequestConfig) => {
-		if (this.sessionCookie) {
-			config.headers.Cookie = this.sessionCookie;
-		}
+		config.headers.Cookie = this.sessionCookie || undefined;
 
-		if (this.verificationToken) {
-			config.headers.__RequestVerificationToken = this.verificationToken;
+		config.headers.__RequestVerificationToken =
+			this.verificationToken || undefined;
+
+		if (this.xmlMode) {
+			config.headers["Content-Type"] = "application/xml";
 		}
 
 		return config;
@@ -144,16 +142,20 @@ export class HttpService {
 		url: string,
 		data: unknown,
 		config?: CustomAxiosRequestConfig
-	) {
+	): Promise<ApiResponse<T>> {
 		const finalConfig = { ...defaultConfig, ...config };
 
-		const response = await this.http.post<ApiResponse<T>>(
+		const response = await this.http.post(
 			url,
-			data,
+			this.xmlMode ? this.xmlBuilder(data) : data,
 			finalConfig
 		);
 
-		return response.data;
+		return {
+			data: response.data,
+			status: response.data,
+			fullResponse: config?.fullResponse ? response : undefined,
+		};
 	}
 
 	public async put<T>(
@@ -172,8 +174,11 @@ export class HttpService {
 		return response.data;
 	}
 
-	public xmlBuilder(data: any) {
-		const builder = new XMLBuilder({});
+	public xmlBuilder(data: unknown, config?: XmlBuilderOptions) {
+		const builder = new XMLBuilder({
+			...config,
+		});
+
 		return builder.build(data);
 	}
 }
