@@ -25,6 +25,12 @@ export class HilinkHttpService extends HttpService {
 
 		const getInformation = await this.getInformation();
 		console.log(getInformation.data?.DeviceName);
+
+		setInterval(async () => {
+			const getData = await this.getTrafficStatistics();
+
+			console.log(getData);
+		}, 1000);
 	}
 
 	async postLogin() {
@@ -80,6 +86,12 @@ export class HilinkHttpService extends HttpService {
 	async getInformation() {
 		return this.get<HilinkApiResponse["Information"]>(
 			HilinkApiRoutes.Information
+		);
+	}
+
+	async getTrafficStatistics() {
+		return this.get<HilinkApiResponse["TrafficStatistics"]>(
+			HilinkApiRoutes.TrafficStatistics
 		);
 	}
 

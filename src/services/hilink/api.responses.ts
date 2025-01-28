@@ -105,6 +105,17 @@ export type HilinkApiResponse = {
 		spreadname_en: string;
 		spreadname_zh: string;
 	};
+	TrafficStatistics: {
+		CurrentConnectTime: number;
+		CurrentUpload: number;
+		CurrentDownload: number;
+		CurrentDownloadRate: number;
+		CurrentUploadRate: number;
+		TotalUpload: number;
+		TotalDownload: number;
+		TotalConnectTime: number;
+		showtraffic: number;
+	};
 	UsbTethering: {
 		tetheringswitch: number;
 	};

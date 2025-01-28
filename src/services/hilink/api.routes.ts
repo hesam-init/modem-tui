@@ -7,4 +7,5 @@ export enum HilinkApiRoutes {
 	Information = "device/information",
 	BasicInformation = "device/basic_information",
 	UsbTethering = "device/usb-tethering-switch",
+	TrafficStatistics = "monitoring/traffic-statistics",
 }
