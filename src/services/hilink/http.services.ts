@@ -22,15 +22,6 @@ export class HilinkHttpService extends HttpService {
 		const postLogin = await this.postLogin();
 		const authToken = postLogin.fullResponse?.headers["set-cookie"]?.toString();
 		this.setSessionCookie(authToken || "");
-
-		const getInformation = await this.getInformation();
-		console.log(getInformation.data?.DeviceName);
-
-		setInterval(async () => {
-			const getData = await this.getTrafficStatistics();
-
-			console.log(getData);
-		}, 1000);
 	}
 
 	async postLogin() {

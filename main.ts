@@ -3,10 +3,13 @@ import { HilinkHttpService } from "@/services/hilink/http.services";
 
 async function main() {
 	try {
-		const env = await envValidator();
-		const huawei = new HilinkHttpService();
+		await envValidator();
 
-		huawei.start();
+		const huawei = new HilinkHttpService();
+		await huawei.start();
+		const information = await huawei.getInformation();
+
+		console.log(information);
 	} catch (error) {
 		process.exit(1);
 	}
