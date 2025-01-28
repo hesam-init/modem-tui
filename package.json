@@ -1,10 +1,13 @@
 {
   "name": "modem",
-  "module": "index.ts",
+  "module": "main.ts",
+  "version": "0.0.1",
   "type": "module",
   "scripts": {
     "start": "bun main.ts",
-    "start:dev": "bun --watch main.ts",
+    "dev": "bun --watch main.ts",
+    "build": "bun run build.ts",
+    "compile": "bun build --compile --minify --target=node --sourcemap ./main.ts --outfile modem_tui",
     "lint": "biome lint ./src"
   },
   "devDependencies": {
