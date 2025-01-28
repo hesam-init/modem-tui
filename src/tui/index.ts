@@ -1,10 +1,12 @@
 import { HilinkHttpService } from "@/services/hilink/http.services";
 import blessed from "blessed";
-import contrib from "blessed-contrib";
+import contrib, { type Widgets } from "blessed-contrib";
 
 export class Dashboard {
+	private refreshRate = 100;
 	private grid: contrib.grid;
 	private screen: blessed.Widgets.Screen;
+
 	private hilinkService: HilinkHttpService;
 
 	private donut!: contrib.Widgets.DonutElement;
@@ -15,9 +17,10 @@ export class Dashboard {
 	private table!: contrib.Widgets.TableElement;
 	private lcdLineOne!: contrib.Widgets.LcdElement;
 	private errorsLine!: contrib.Widgets.LineElement;
-	private transactionsLine!: contrib.Widgets.LineElement;
 	private informationBox!: blessed.Widgets.BoxElement;
 	private log!: contrib.Widgets.LogElement;
+	private logBox!: blessed.Widgets.BoxElement;
+	private networkUsage!: contrib.Widgets.LineElement;
 
 	private servers: string[] = ["US1", "US2", "EU1", "AU1", "AS1", "JP1"];
 	private commands: string[] = ["node", "timer", "~/ls -l", "awk"];
@@ -25,7 +28,9 @@ export class Dashboard {
 	constructor() {
 		this.hilinkService = new HilinkHttpService();
 
-		this.screen = blessed.screen();
+		this.screen = blessed.screen({
+			fastCSR: true,
+		});
 		this.grid = new contrib.grid({ rows: 12, cols: 12, screen: this.screen });
 
 		this.initializeWidgets();
@@ -37,10 +42,20 @@ export class Dashboard {
 		await this.hilinkService.start();
 		await this.hilinkService.getStateLogin();
 
-		this.screen.render();
+		setInterval(() => {
+			this.screen.render();
+		}, this.refreshRate);
 	}
 
 	private initializeWidgets(): void {
+		this.networkUsage = this.grid.set(0, 0, 6, 6, contrib.line, {
+			// showNthLabel: 5,
+			maxY: 10000000,
+			label: "Network Usage",
+			showLegend: true,
+			legend: { width: 10 },
+		} as Widgets.LineOptions);
+
 		this.donut = this.grid.set(8, 8, 4, 2, contrib.donut, {
 			label: "Percent Donut",
 			radius: 16,
@@ -81,28 +96,6 @@ export class Dashboard {
 			columnWidth: [24, 10, 10],
 		});
 
-		this.informationBox = this.grid.set(0, 9, 2, 3, blessed.box, {
-			top: "center",
-			left: "center",
-			width: "50%",
-			height: "50%",
-			content: "Hello {bold}world{/bold}!",
-			tags: true,
-			border: {
-				type: "line",
-			},
-			style: {
-				fg: "white",
-				bg: "magenta",
-				border: {
-					fg: "#f0f0f0",
-				},
-				hover: {
-					bg: "green",
-				},
-			},
-		});
-
 		this.errorsLine = this.grid.set(0, 6, 4, 3, contrib.line, {
 			style: { line: "red", text: "white", baseline: "black" },
 			label: "Errors Rate",
@@ -110,19 +103,14 @@ export class Dashboard {
 			showLegend: true,
 		});
 
-		this.transactionsLine = this.grid.set(0, 0, 6, 6, contrib.line, {
-			showNthLabel: 5,
-			maxY: 100,
-			label: "Total Transactions",
-			showLegend: true,
-			legend: { width: 10 },
+		this.log = this.grid.set(8, 6, 4, 2, contrib.log, {
+			fg: "green",
+			selectedFg: "green",
+			label: "Server Log",
 		});
 
-		this.informationBox = this.grid.set(6, 0, 6, 6, blessed.box, {
-			top: "center",
-			left: "center",
-			width: "50%",
-			height: "50%",
+		this.logBox = this.grid.set(6, 0, 6, 6, blessed.box, {
+			label: "Consol Log",
 			content: "Hello {bold}world{/bold}!",
 			tags: true,
 			border: {
@@ -140,10 +128,18 @@ export class Dashboard {
 			},
 		});
 
-		this.log = this.grid.set(8, 6, 4, 2, contrib.log, {
-			fg: "green",
-			selectedFg: "green",
-			label: "Server Log",
+		this.grid.set(0, 9, 2, 3, blessed.box, {
+			label: "Cool",
+			content: "Hello {bold}world{/bold}!",
+			tags: true,
+			border: {
+				type: "line",
+			},
+			style: {
+				hover: {
+					bg: "green",
+				},
+			},
 		});
 	}
 
@@ -159,21 +155,71 @@ export class Dashboard {
 			this.table.emit("attach");
 			this.lcdLineOne.emit("attach");
 			this.errorsLine.emit("attach");
-			this.transactionsLine.emit("attach");
+			this.networkUsage.emit("attach");
 			this.informationBox.emit("attach");
 			this.log.emit("attach");
 		});
 	}
 
 	private startDataUpdates(): void {
-		this.updateGauges();
 		this.updateBarChart();
+		this.updateNetworkUsage();
+		this.updateLogBox();
+
+		this.updateGauges();
 		this.updateTable();
 		this.updateLog();
 		this.updateSparkline();
-		this.updateLineCharts();
 		// this.updateLCD();
 		this.updateDonut();
+	}
+
+	private async updateLogBox() {
+		setInterval(async () => {
+			const networkStats = await this.hilinkService.getTrafficStatistics();
+
+			this.logBox.setContent(`${JSON.stringify(networkStats.data).toString()}`);
+		}, 100);
+	}
+
+	private async updateNetworkUsage(): Promise<void> {
+		const downloadRateData: Widgets.LineData = {
+			title: "Download Rate",
+			style: { line: "blue" },
+			x: Array.from({ length: 30 }, (_, i) => "-"),
+			y: Array.from({ length: 30 }, () => 0),
+		};
+
+		const uploadRateData: Widgets.LineData = {
+			title: "Upload Rate",
+			style: { line: "red" },
+			x: Array.from({ length: 30 }, (_, i) => "-"),
+			y: Array.from({ length: 30 }, () => 0),
+		};
+
+		const updateNetworkUsageData = async () => {
+			const networkStats = await this.hilinkService.getTrafficStatistics();
+
+			downloadRateData.y?.shift();
+			downloadRateData.y?.push(networkStats.data?.CurrentDownloadRate || 0);
+
+			uploadRateData.y?.shift();
+			uploadRateData.y?.push(networkStats.data?.CurrentUploadRate || 0);
+		};
+
+		const updateLineChartData = (
+			// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+			data: any[],
+			lineChart: contrib.Widgets.LineElement
+		) => {
+			lineChart.setData(data);
+		};
+
+		setInterval(() => {
+			updateNetworkUsageData();
+
+			this.networkUsage.setData([downloadRateData, uploadRateData]);
+		}, 100);
 	}
 
 	private updateGauges(): void {
@@ -254,53 +300,6 @@ export class Dashboard {
 
 		refreshSpark();
 		setInterval(refreshSpark, 1000);
-	}
-
-	private updateLineCharts(): void {
-		const transactionsData = {
-			title: "USA",
-			style: { line: "red" },
-			x: Array.from({ length: 30 }, (_, i) => `00:${i < 10 ? "0" + i : i}`),
-			y: Array.from({ length: 30 }, () => Math.floor(Math.random() * 100)),
-		};
-
-		const transactionsData1 = {
-			title: "Europe",
-			style: { line: "yellow" },
-			x: Array.from({ length: 30 }, (_, i) => `00:${i < 10 ? "0" + i : i}`),
-			y: Array.from({ length: 30 }, () => Math.floor(Math.random() * 100)),
-		};
-
-		const errorsData = {
-			title: "server 1",
-			x: Array.from({ length: 6 }, (_, i) => `00:0${i * 5}`),
-			y: Array.from({ length: 6 }, () => Math.floor(Math.random() * 100)),
-		};
-
-		const setLineData = (
-			mockData: any[],
-			line: contrib.Widgets.LineElement
-		) => {
-			mockData.forEach((data) => {
-				data.y.shift();
-				data.y.push(
-					Math.max(
-						data.y[data.y.length - 1] + Math.floor(Math.random() * 10) - 5,
-						10
-					)
-				);
-			});
-			line.setData(mockData);
-		};
-
-		setInterval(() => {
-			setLineData([transactionsData, transactionsData1], this.transactionsLine);
-			this.screen.render();
-		}, 500);
-
-		setInterval(() => {
-			setLineData([errorsData], this.errorsLine);
-		}, 1500);
 	}
 
 	// private updateLCD(): void {
